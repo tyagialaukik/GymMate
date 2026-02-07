@@ -1,0 +1,63 @@
+:root {
+  /* -- HOLOGRAPHIC / JARVIS THEME -- */
+
+  /* Core Palette - Cyberpunk / Sci-Fi */
+  --color-primary: #00f0ff;
+  /* Neon Cyan */
+  --color-secondary: #00a8ff;
+  /* Deep Sky Blue */
+  --color-accent-pink: #ff0055;
+  /* Neon Magenta */
+  --color-accent-purple: #bc13fe;
+  /* Neon Purple */
+  --color-accent-blue: #00f0ff;
+  /* Mapped for compatibility */
+
+  --color-success: #00ffa3;
+  /* Matrix Green */
+  --color-warning: #ffd600;
+  /* Cyber Yellow */
+  --color-danger: #ff2a2a;
+  /* Alert Red */
+
+  /* Backgrounds */
+  --bg-base: #050505;
+  /* Deep Void Black */
+  --bg-dark: #000000;
+
+  /* Holographic Surfaces */
+  --glass-bg-1: rgba(0, 240, 255, 0.05);
+  --glass-bg-2: rgba(0, 168, 255, 0.1);
+
+  /* Borders & Glows */
+  --glass-border: rgba(0, 240, 255, 0.3);
+  --glass-border-strong: rgba(0, 240, 255, 0.6);
+
+  --shadow-sm: 0 0 10px rgba(0, 240, 255, 0.1);
+  --shadow-md: 0 0 20px rgba(0, 240, 255, 0.2);
+  --shadow-glow: 0 0 15px var(--color-primary);
+
+  /* Gradients */
+  --grad-aurora: linear-gradient(135deg, rgba(0, 240, 255, 0.1) 0%, rgba(188, 19, 254, 0.1) 100%);
+  --grad-fluid: linear-gradient(90deg, #00f0ff, #bc13fe);
+
+  /* Text */
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-dim: rgba(255, 255, 255, 0.4);
+
+  /* Layout */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 9999px;
+
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* Animation */
+  --ease-spring: cubic-bezier(0.23, 1, 0.32, 1);
+}
