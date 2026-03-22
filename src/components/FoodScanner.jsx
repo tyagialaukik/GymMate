@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Camera, RefreshCw, X, ShieldAlert, Zap, Cpu, Scan, Info, TrendingUp } from 'lucide-react';
+import API_BASE_URL from '../config';
 
 const FoodScanner = ({ onBack }) => {
     const videoRef = useRef(null);
@@ -59,7 +60,7 @@ const FoodScanner = ({ onBack }) => {
         setError(null);
 
         try {
-            const response = await fetch("http://localhost:5000/api/vision", {
+            const response = await fetch(`${API_BASE_URL}/api/vision`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ 

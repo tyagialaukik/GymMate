@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, X, Cpu, Terminal } from 'lucide-react';
+import API_BASE_URL from '../config';
 
 const AIChat = ({ isOpen, onClose }) => {
     const [messages, setMessages] = useState([
@@ -29,7 +30,7 @@ const AIChat = ({ isOpen, onClose }) => {
         setMessages(prev => [...prev, { id: botMsgId, type: 'bot', text: '' }]);
 
         try {
-            const response = await fetch("http://localhost:5000/api/chat", {
+            const response = await fetch(`${API_BASE_URL}/api/chat`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

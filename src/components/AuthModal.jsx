@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Mail, Lock, Sparkles, Chrome, ChevronRight, UserCheck } from 'lucide-react';
+import API_BASE_URL from '../config';
 
 const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
     const [view, setView] = useState('picker'); // 'picker' or 'form'
@@ -15,7 +16,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
         try {
             // In a real app, this would be a Google OAuth token verification.
             // For now, we'll use our backend signup/login bridge.
-            const response = await fetch("http://localhost:5000/api/auth/signup", {
+            const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -29,7 +30,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
 
             // If user already exists, try login
             if (!response.ok) {
-                const loginRes = await fetch("http://localhost:5000/api/auth/login", {
+                const loginRes = await fetch(`${API_BASE_URL}/api/auth/login`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
