@@ -105,7 +105,7 @@ app.post('/api/chat', async (req, res) => {
         }
 
         const model = genAI.getGenerativeModel({ 
-            model: "gemini-2.5-flash", 
+            model: "gemini-1.5-flash", 
             systemInstruction: systemMessage ? systemMessage.content : "You are GymMate AI — a personal fitness coach."
         });
 
@@ -157,7 +157,7 @@ app.post('/api/vision', async (req, res) => {
         }
 
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.5-flash",
+            model: "gemini-1.5-flash",
             systemInstruction: "You are a GymMate AI nutritional analyzer. You MUST return ONLY valid JSON."
         });
 
