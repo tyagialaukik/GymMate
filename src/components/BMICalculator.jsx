@@ -80,6 +80,11 @@ const BMICalculator = ({ onBack }) => {
                             </div>
                         </div>
 
+                        <div className="preview-chips">
+                            <span className="chip"><Ruler size={14} /> {height} cm</span>
+                            <span className="chip"><Weight size={14} /> {weight} kg</span>
+                        </div>
+
                         <button className="btn-fluid calculate-btn" onClick={calculateBMI}>
                             Calculate BMI
                         </button>
@@ -105,6 +110,22 @@ const BMICalculator = ({ onBack }) => {
                         <button className="btn-fluid full-width" onClick={reset}>Recalculate</button>
                     </div>
                 )}
+                
+                {/* Visual Reference Bar */}
+                <div className="bmi-reference">
+                    <div className="ref-bar">
+                        <div className="ref-segment" style={{background: 'var(--color-accent-blue)', flex: 1.85}}></div>
+                        <div className="ref-segment" style={{background: 'var(--color-success)', flex: 0.65}}></div>
+                        <div className="ref-segment" style={{background: 'var(--color-warning)', flex: 0.5}}></div>
+                        <div className="ref-segment" style={{background: 'var(--color-danger)', flex: 1}}></div>
+                    </div>
+                    <div className="ref-labels">
+                        <span>Under</span>
+                        <span>Normal</span>
+                        <span>Over</span>
+                        <span>Obese</span>
+                    </div>
+                </div>
             </div>
 
             <style>{`
@@ -163,7 +184,16 @@ const BMICalculator = ({ onBack }) => {
             clip-path: polygon(5px 0, 100% 0, calc(100% - 5px) 100%, 0 100%);
         }
 
-        .calculate-btn { width: 100%; margin-top: 16px; }
+        .calculate-btn { width: 100%; margin-top: 24px; }
+        
+        .preview-chips {
+            display: flex; gap: 12px; margin-top: 24px;
+        }
+        .preview-chips .chip {
+            flex: 1; padding: 10px; border-radius: 4px; border: 1px solid var(--glass-border);
+            background: rgba(0,240,255,0.05); color: #fff; font-size: 14px; font-weight: 800; font-family: monospace;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
 
         /* Results */
         .result-card { padding: 32px; text-align: center; border: 1px solid var(--color-primary); box-shadow: 0 0 20px rgba(0,240,255,0.2); }
@@ -188,6 +218,19 @@ const BMICalculator = ({ onBack }) => {
         
         .full-width { width: 100%; }
         
+        /* Reference Bar */
+        .bmi-reference {
+            margin-top: 24px; padding: 32px;
+            background: rgba(0,10,20,0.7); 
+            border: 1px solid var(--color-primary);
+            box-shadow: 0 0 20px rgba(0,240,255,0.2);
+            border-radius: var(--radius-sm);
+        }
+        .ref-bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 12px; gap: 2px; }
+        .ref-segment { height: 100%; transition: opacity 0.3s; opacity: 0.5; }
+        .ref-segment:hover { opacity: 1; }
+        .ref-labels { display: flex; justify-content: space-between; font-size: 9px; font-weight: 800; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 1px; }
+
         @media (prefers-color-scheme: dark) {
             .input-card, .result-card { background: rgba(0,10,20,0.8); }
         }

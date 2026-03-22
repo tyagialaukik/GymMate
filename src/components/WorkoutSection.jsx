@@ -139,16 +139,22 @@ const WorkoutSection = ({ onBack, context }) => {
         .day-summary h3 { font-size: 18px; margin-bottom: 2px; color: #fff; letter-spacing: 1px; }
         .day-summary p { color: var(--color-primary); font-size: 11px; text-transform: uppercase; font-weight: 700; }
 
-        .exercise-list { display: flex; flex-direction: column; gap: 12px; }
+        .exercise-list { display: flex; flex-direction: column; gap: 16px; }
         
         .exercise-item {
             display: flex; justify-content: space-between; align-items: center;
             padding: 16px; border-radius: var(--radius-sm); background: rgba(0,10,20,0.5);
             border: 1px solid var(--glass-border);
-            transition: all 0.3s;
+            border-left: 3px solid transparent;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
         .exercise-item.completed { opacity: 0.5; border-color: var(--glass-border); }
-        .exercise-item:hover { border-color: var(--color-primary); box-shadow: 0 0 15px rgba(0,240,255,0.1); }
+        .exercise-item:hover { 
+            border-color: var(--color-primary); 
+            border-left: 3px solid var(--color-primary);
+            box-shadow: 0 0 20px rgba(0,240,255,0.15), inset 15px 0 20px -15px var(--color-primary);
+            transform: translateX(4px);
+        }
         
         .item-left { display: flex; align-items: center; gap: 16px; }
         

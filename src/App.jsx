@@ -100,13 +100,19 @@ function App() {
         .fab-glow {
           position: absolute; inset: -4px; border-radius: 14px;
           border: 1px solid var(--color-primary); opacity: 0.3;
-          animation: fab-pulse 2s infinite;
+          animation: fab-pulse 2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+        }
+        
+        .fab-glow::after {
+          content: ''; position: absolute; inset: -8px; border-radius: 18px;
+          border: 1px solid var(--color-primary); opacity: 0.1;
+          animation: fab-pulse 2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+          animation-delay: 0.2s;
         }
         
         @keyframes fab-pulse {
-          0% { transform: scale(1); opacity: 0.3; }
-          50% { transform: scale(1.1); opacity: 0.1; }
-          100% { transform: scale(1); opacity: 0.3; }
+          0% { transform: scale(0.9); opacity: 0.8; }
+          100% { transform: scale(1.3); opacity: 0; }
         }
 
         .fab-label {

@@ -19,45 +19,83 @@ const AIChat = ({ isOpen, onClose }) => {
         if (!input.trim()) return;
 
         const userMsg = { id: Date.now(), type: 'user', text: input };
+        const currentInput = input;
         setMessages(prev => [...prev, userMsg]);
         setInput('');
         setIsTyping(true);
 
+        // Add an empty bot message that we'll stream into
+        const botMsgId = Date.now() + 1;
+        setMessages(prev => [...prev, { id: botMsgId, type: 'bot', text: '' }]);
+
         try {
             const response = await fetch("http://localhost:5000/api/chat", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    model: "gpt-4o-mini", // Efficient and high-quality for chat
                     messages: [
                         {
                             role: "system",
-                            content: "You are JARVIS, a tactical, technical, and highly intelligent fitness AI assistant for the GymMate app. Your tone is supportive but professional, using technical terms like 'physiological data', 'optimization', 'protocols', and 'biometrics'. Provide expert, evidence-based fitness and nutrition advice. Keep responses concise and structured."
+                            content: "You are GymMate AI — a personal fitness coach. Help users with workout plans, nutrition, exercise form, and motivation. Be energetic and practical. Use bullet points for plans."
                         },
                         ...messages.map(m => ({
                             role: m.type === 'bot' ? 'assistant' : 'user',
                             content: m.text
                         })),
-                        { role: "user", content: input }
-                    ],
-                    temperature: 0.7
+                        { role: "user", content: currentInput }
+                    ]
                 })
             });
 
-            if (!response.ok) throw new Error("Connection to Tactical Core failed.");
+            console.log("[AIChat] Response status:", response.status, response.statusText);
+            if (!response.ok) {
+                const errBody = await response.text();
+                console.error("[AIChat] Server error body:", errBody);
+                throw new Error(`Server error ${response.status}: ${errBody}`);
+            }
 
-            const data = await response.json();
-            const botText = data.choices[0].message.content;
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
 
-            setMessages(prev => [...prev, { id: Date.now() + 1, type: 'bot', text: botText }]);
+            setIsTyping(false);
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop(); // keep incomplete line in buffer
+
+                for (const line of lines) {
+                    if (!line.startsWith('data: ')) continue;
+                    const payload = line.slice(6).trim();
+                    if (payload === '[DONE]') break;
+
+                    try {
+                        const parsed = JSON.parse(payload);
+                        if (parsed.error) throw new Error(parsed.error);
+                        if (parsed.text) {
+                            setMessages(prev => prev.map(m =>
+                                m.id === botMsgId
+                                    ? { ...m, text: m.text + parsed.text }
+                                    : m
+                            ));
+                        }
+                    } catch (e) {
+                        // skip malformed chunk
+                    }
+                }
+            }
         } catch (error) {
-            setMessages(prev => [...prev, {
-                id: Date.now() + 1,
-                type: 'bot',
-                text: "Warning: Tactical Core communication error. Systems may be offline or quota exceeded."
-            }]);
+            console.error("[AIChat] ❌ Caught error:", error.message, error);
+            setIsTyping(false);
+            setMessages(prev => prev.map(m =>
+                m.id === botMsgId
+                    ? { ...m, text: "⚠️ GymMate AI is offline or the API key is not configured. Please try again." }
+                    : m
+            ));
         } finally {
             setIsTyping(false);
         }

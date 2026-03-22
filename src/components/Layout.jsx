@@ -129,8 +129,21 @@ const Layout = ({ children, user, onAuthClick }) => {
         .auth-btn.login {
             background: #000; color: var(--color-primary);
             border-color: var(--color-primary);
+            overflow: hidden;
         }
         .auth-btn.login:hover { background: var(--color-primary); color: #000; box-shadow: 0 0 20px var(--color-primary); }
+        
+        .btn-glow {
+            position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.4), transparent);
+            transform: skewX(-20deg);
+            animation: shimmerEffect 3s infinite;
+        }
+        @keyframes shimmerEffect { 
+            0% { left: -100%; } 
+            20% { left: 200%; } 
+            100% { left: 200%; } 
+        }
         
         .auth-btn.profile {
             background: rgba(255,255,255,0.05); color: #fff;

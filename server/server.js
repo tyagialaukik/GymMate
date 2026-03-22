@@ -1,14 +1,16 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import axios from 'axios';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 dotenv.config();
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,7 +19,11 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const DB_PATH = path.join(__dirname, 'db.json');
 
-app.use(cors());
+app.use(cors({
+    origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'],
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 app.use(express.json({ limit: '50mb' }));
 
 // --- Mock Database Management ---
@@ -71,27 +77,122 @@ app.post('/api/auth/login', async (req, res) => {
 // --- AI PROXY ROUTES ---
 app.post('/api/chat', async (req, res) => {
     try {
-        console.log("[JARVIS] Processing Chat Request...");
-        const response = await axios.post("https://api.openai.com/v1/chat/completions", req.body, {
-            headers: { "Authorization": `Bearer ${process.env.OPENAI_API_KEY}` }
+        const { messages } = req.body;
+        console.log("[GymMate AI] ✅ Route HIT — /api/chat");
+        console.log("[GymMate AI] API Key loaded:", !!process.env.GEMINI_API_KEY);
+        console.log("[GymMate AI] API Key value (first 8 chars):", process.env.GEMINI_API_KEY?.slice(0, 8));
+
+        if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your_gemini_api_key_here') {
+            throw new Error("GEMINI_API_KEY is not configured.");
+        }
+
+        // Extract system prompt and history
+        const systemMessage = messages.find(m => m.role === 'system');
+        let history = messages
+            .filter(m => m.role !== 'system')
+            .map(m => ({
+                role: m.role === 'assistant' ? 'model' : 'user',
+                parts: [{ text: m.content }]
+            }));
+
+        // Pop the latest user message — that's what we send via sendMessageStream
+        const userMessage = history.pop().parts[0].text;
+
+        // Gemini requires history to start with 'user', never 'model'
+        // Drop any leading model messages (e.g. the initial bot greeting)
+        while (history.length > 0 && history[0].role === 'model') {
+            history.shift();
+        }
+
+        const model = genAI.getGenerativeModel({ 
+            model: "gemini-2.5-flash", 
+            systemInstruction: systemMessage ? systemMessage.content : "You are GymMate AI — a personal fitness coach."
         });
-        res.json(response.data);
+
+        const chat = model.startChat({
+            history: history,
+        });
+
+        // Set headers for SSE
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+
+        const result = await chat.sendMessageStream(userMessage);
+
+        for await (const chunk of result.stream) {
+            const chunkText = chunk.text();
+            res.write(`data: ${JSON.stringify({ text: chunkText })}\n\n`);
+        }
+
+        res.write('data: [DONE]\n\n');
+        res.end();
+
     } catch (error) {
-        console.error("[ERROR] OpenAI Chat failure:", error.response?.data || error.message);
-        res.status(500).json({ error: error.response?.data?.error?.message || "Tactical Core Timeout" });
+        console.error("[ERROR] Gemini Chat failure — message:", error.message);
+        console.error("[ERROR] Full error:", error);
+        // If headers are already sent, we can't send a normal JSON error
+        if (!res.headersSent) {
+            res.status(500).json({ error: error.message || "Gemini Core Timeout" });
+        } else {
+            res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
+            res.end();
+        }
     }
 });
 
 app.post('/api/vision', async (req, res) => {
     try {
-        console.log("[JARVIS] Processing Vision Scan...");
-        const response = await axios.post("https://api.openai.com/v1/chat/completions", req.body, {
-            headers: { "Authorization": `Bearer ${process.env.OPENAI_API_KEY}` }
+        console.log("[GymMate AI] Processing Vision Scan (Streaming)...");
+
+        if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your_gemini_api_key_here') {
+            throw new Error("GEMINI_API_KEY is not configured.");
+        }
+
+        // We expect the frontend to just send the base64 image string and optionally a prompt
+        const { imageBase64, prompt } = req.body;
+
+        if (!imageBase64) {
+            throw new Error("No image data provided.");
+        }
+
+        const model = genAI.getGenerativeModel({
+            model: "gemini-2.5-flash",
+            systemInstruction: "You are a GymMate AI nutritional analyzer. You MUST return ONLY valid JSON."
         });
-        res.json(response.data);
+
+        const defaultPrompt = "Identify the food in this image and provide estimated nutritional data: total calories (number), protein (number), carbs (number), and fats (number). Format the response as JSON with keys: name (string), calories (number), protein (number), carbs (number), fats (number), confidence (number 0-100). Do not use markdown backticks.";
+
+        const imagePart = {
+            inlineData: {
+                data: imageBase64,
+                mimeType: "image/jpeg"
+            }
+        };
+
+        // Set headers for SSE
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+
+        const result = await model.generateContentStream([prompt || defaultPrompt, imagePart]);
+
+        for await (const chunk of result.stream) {
+            const chunkText = chunk.text();
+            res.write(`data: ${JSON.stringify({ text: chunkText })}\n\n`);
+        }
+
+        res.write('data: [DONE]\n\n');
+        res.end();
+
     } catch (error) {
-        console.error("[ERROR] OpenAI Vision failure:", error.response?.data || error.message);
-        res.status(500).json({ error: error.response?.data?.error?.message || "Vision Sensor Error" });
+        console.error("[ERROR] Gemini Vision failure:", error);
+        if (!res.headersSent) {
+            res.status(500).json({ error: error.message || "Vision Sensor Error" });
+        } else {
+            res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
+            res.end();
+        }
     }
 });
 

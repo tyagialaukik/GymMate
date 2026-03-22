@@ -6,6 +6,7 @@ const FoodScanner = ({ onBack }) => {
     const canvasRef = useRef(null);
     const [isStreaming, setIsStreaming] = useState(false);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [streamText, setStreamText] = useState('');
     const [scanResult, setScanResult] = useState(null);
     const [error, setError] = useState(null);
 
@@ -54,42 +55,62 @@ const FoodScanner = ({ onBack }) => {
         if (!base64Image) return;
 
         setIsAnalyzing(true);
+        setStreamText('');
         setError(null);
 
         try {
             const response = await fetch("http://localhost:5000/api/vision", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    model: "gpt-4o",
-                    messages: [
-                        {
-                            role: "user",
-                            content: [
-                                { type: "text", text: "Identify the food in this image and provide estimated nutritional data: total calories, protein (g), carbs (g), and fats (g). Format the response as JSON with keys: name, calories, protein, carbs, fats, confidence." },
-                                { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64Image}` } }
-                            ]
-                        }
-                    ],
-                    max_tokens: 300
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    imageBase64: base64Image,
+                    prompt: "Identify the food in this image and provide estimated nutritional data. Format the response as ONLY JSON with keys: name (string), calories (number), protein (number), carbs (number), fats (number), fiber (number), confidence (number 0-100). Do not use markdown backticks."
                 })
             });
 
             if (!response.ok) throw new Error("AI Core Connection Refused.");
 
-            const data = await response.json();
-            const content = data.choices[0].message.content;
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            let content = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop(); // keep incomplete line in buffer
+
+                for (const line of lines) {
+                    if (!line.startsWith('data: ')) continue;
+                    const payload = line.slice(6).trim();
+                    if (payload === '[DONE]') break;
+
+                    try {
+                        const parsed = JSON.parse(payload);
+                        if (parsed.error) throw new Error(parsed.error);
+                        if (parsed.text) {
+                            content += parsed.text;
+                            setStreamText(content);
+                        }
+                    } catch (e) {
+                        // skip malformed chunk
+                    }
+                }
+            }
 
             // Extract JSON from response (handling potential markdown)
-            const jsonStr = content.match(/\{.*\}/s)[0];
+            const jsonStr = content.match(/\{[\s\S]*\}/)[0];
             const result = JSON.parse(jsonStr);
             setScanResult(result);
         } catch (err) {
+            console.error(err);
             setError("SCAN ERROR: Unable to process physiological data.");
         } finally {
             setIsAnalyzing(false);
+            setStreamText('');
         }
     };
 
@@ -126,11 +147,13 @@ const FoodScanner = ({ onBack }) => {
                     </div>
 
                     <div className="hud-readout">
-                        <div className="readout-line">STATUS: {isAnalyzing ? 'UPLOADING...' : isStreaming ? 'READY' : 'OFFLINE'}</div>
+                        <div className={`readout-line ${isAnalyzing ? 'pulse-text' : ''}`}>STATUS: {isAnalyzing ? 'UPLOADING...' : isStreaming ? 'READY' : 'OFFLINE'}</div>
                         <div className="readout-line">SENSORS: {isStreaming ? 'ACTIVE' : 'IDLE'}</div>
                     </div>
 
                     <div className="hud-glitch-lines"></div>
+                    
+                    {isAnalyzing && <div className="scanner-sweep-line"></div>}
                 </div>
 
                 <canvas ref={canvasRef} style={{ display: 'none' }} />
@@ -154,38 +177,54 @@ const FoodScanner = ({ onBack }) => {
                             <div className="macro-item">
                                 <span className="label">CALORIES</span>
                                 <span className="value">{scanResult.calories}</span>
+                                <div className="progress-bar"><div className="fill" style={{width: '100%', background: 'var(--color-primary)'}}></div></div>
                             </div>
                             <div className="macro-item">
                                 <span className="label">PROTEIN</span>
                                 <span className="value">{scanResult.protein}g</span>
+                                <div className="progress-bar"><div className="fill" style={{width: Math.min((scanResult.protein / 150) * 100, 100) + '%', background: '#FF3366'}}></div></div>
                             </div>
                             <div className="macro-item">
                                 <span className="label">CARBS</span>
                                 <span className="value">{scanResult.carbs}g</span>
+                                <div className="progress-bar"><div className="fill" style={{width: Math.min((scanResult.carbs / 300) * 100, 100) + '%', background: '#33CCFF'}}></div></div>
                             </div>
                             <div className="macro-item">
                                 <span className="label">FATS</span>
                                 <span className="value">{scanResult.fats}g</span>
+                                <div className="progress-bar"><div className="fill" style={{width: Math.min((scanResult.fats / 80) * 100, 100) + '%', background: '#FFCC00'}}></div></div>
+                            </div>
+                            <div className="macro-item">
+                                <span className="label">FIBER</span>
+                                <span className="value">{scanResult.fiber}g</span>
+                                <div className="progress-bar"><div className="fill" style={{width: Math.min((scanResult.fiber / 30) * 100, 100) + '%', background: '#33FF99'}}></div></div>
                             </div>
                         </div>
                         <button className="btn-restart" onClick={() => setScanResult(null)}>NEW SCAN</button>
                     </div>
                 ) : (
-                    <button
-                        className={`action-btn-scan ${isAnalyzing ? 'busy' : ''}`}
-                        onClick={analyzeFood}
-                        disabled={isAnalyzing || !isStreaming}
-                    >
-                        {isAnalyzing ? (
-                            <RefreshCw size={24} className="spin" />
-                        ) : (
-                            <>
-                                <div className="btn-bg"></div>
-                                <Zap size={24} fill="currentColor" />
-                                <span>ANALYZE MACROS</span>
-                            </>
+                    <div className="scan-action-area">
+                        {isAnalyzing && streamText && (
+                            <div className="stream-readout">
+                                <span className="stream-text">{streamText.length > 80 ? streamText.slice(-80) + '...' : streamText}</span>
+                            </div>
                         )}
-                    </button>
+                        <button
+                            className={`action-btn-scan ${isAnalyzing ? 'busy' : ''}`}
+                            onClick={analyzeFood}
+                            disabled={isAnalyzing || !isStreaming}
+                        >
+                            {isAnalyzing ? (
+                                <RefreshCw size={24} className="spin" />
+                            ) : (
+                                <>
+                                    <div className="btn-bg"></div>
+                                    <Zap size={24} fill="currentColor" />
+                                    <span>ANALYZE MACROS</span>
+                                </>
+                            )}
+                        </button>
+                    </div>
                 )}
             </div>
 
@@ -215,7 +254,8 @@ const FoodScanner = ({ onBack }) => {
                 }
                 .hud-corners .corner { 
                     position: absolute; width: 40px; height: 40px; 
-                    border: 2px solid var(--color-primary); opacity: 0.5;
+                    border: 2px solid var(--color-primary); opacity: 0.8;
+                    box-shadow: 0 0 10px var(--color-primary), inset 0 0 10px var(--color-primary);
                 }
                 .tl { top: 40px; left: 40px; border-right: none; border-bottom: none; }
                 .tr { top: 40px; right: 40px; border-left: none; border-bottom: none; }
@@ -232,7 +272,21 @@ const FoodScanner = ({ onBack }) => {
                 .hud-readout {
                     position: absolute; top: 100px; left: 60px;
                     font-family: monospace; font-size: 10px; color: var(--color-primary);
-                    letter-spacing: 1px; line-height: 2;
+                    letter-spacing: 1px; line-height: 2; text-shadow: 0 0 5px var(--color-primary);
+                }
+                .pulse-text { animation: textPulse 1.5s infinite; }
+                @keyframes textPulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+                
+                .scanner-sweep-line {
+                    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+                    background: var(--color-primary); box-shadow: 0 0 15px 2px var(--color-primary);
+                    animation: sweep 2s linear infinite; z-index: 5;
+                }
+                @keyframes sweep {
+                    0% { top: 0; opacity: 0; }
+                    10% { opacity: 1; }
+                    90% { opacity: 1; }
+                    100% { top: 100%; opacity: 0; }
                 }
 
                 .scanner-controls {
@@ -262,15 +316,20 @@ const FoodScanner = ({ onBack }) => {
                 .result-header h4 { font-size: 18px; letter-spacing: 1px; flex: 1; }
                 .conf-tag { font-size: 9px; font-weight: 800; padding: 4px 8px; border: 1px solid var(--color-primary); color: var(--color-primary); }
 
-                .macros-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
-                .macro-item { display: flex; flex-direction: column; align-items: center; }
-                .macro-item .label { font-size: 8px; color: var(--text-secondary); font-weight: 800; }
-                .macro-item .value { font-size: 16px; font-weight: 800; color: #fff; }
-
                 .btn-restart { width: 100%; padding: 12px; background: transparent; border: 1px solid var(--color-primary); color: var(--color-primary); font-weight: 800; font-size: 12px; cursor: pointer; }
-                
                 .error-display { color: var(--color-accent-pink); display: flex; flex-direction: column; align-items: center; gap: 12px; }
                 .btn-retry { background: var(--color-accent-pink); color: #000; border: none; padding: 8px 16px; font-weight: 800; cursor: pointer; }
+
+                .macros-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 24px; }
+                .macro-item { display: flex; flex-direction: column; align-items: center; width: 100%; }
+                .macro-item .label { font-size: 8px; color: var(--text-secondary); font-weight: 800; margin-bottom: 4px; }
+                .macro-item .value { font-size: 14px; font-weight: 800; color: #fff; margin-bottom: 6px; }
+                .progress-bar { width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
+                .progress-bar .fill { height: 100%; transition: width 0.5s ease-out; }
+
+                .scan-action-area { display: flex; flex-direction: column; align-items: center; gap: 16px; width: 100%; }
+                .stream-readout { background: rgba(0, 240, 255, 0.1); padding: 8px 16px; border-radius: 4px; border: 1px solid rgba(0, 240, 255, 0.3); max-width: 300px; text-align: center; }
+                .stream-text { font-family: monospace; font-size: 10px; color: var(--color-primary); word-break: break-all; }
 
                 .spin { animation: spin 1s linear infinite; }
                 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

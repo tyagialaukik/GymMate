@@ -4,12 +4,17 @@ import { EXERCISE_GUIDE_DATA } from '../data/exerciseData';
 
 const ExerciseGuide = ({ onBack }) => {
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('ALL');
     const [selectedExercise, setSelectedExercise] = useState(null);
 
-    const filteredExercises = EXERCISE_GUIDE_DATA.filter(ex =>
-        ex.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ex.category.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const categories = ['ALL', 'CHEST', 'BACK', 'LEGS', 'SHOULDERS', 'CORE', 'ARMS'];
+
+    const filteredExercises = EXERCISE_GUIDE_DATA.filter(ex => {
+        const matchesSearch = ex.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                              ex.category.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesCategory = selectedCategory === 'ALL' || ex.category.toUpperCase() === selectedCategory;
+        return matchesSearch && matchesCategory;
+    });
 
     return (
         <div className="exercise-guide animate-in">
@@ -24,15 +29,29 @@ const ExerciseGuide = ({ onBack }) => {
             </header>
 
             <div className="guide-container">
-                {/* Search Bar */}
-                <div className="glass-panel search-panel">
-                    <Search size={18} className="search-icon" />
-                    <input
-                        type="text"
-                        placeholder="Search movement core..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                {/* Search & Filter */}
+                <div className="discovery-header">
+                    <div className="glass-panel search-panel">
+                        <Search size={18} className="search-icon" />
+                        <input
+                            type="text"
+                            placeholder="Search movement core..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    
+                    <div className="filter-pills">
+                        {categories.map(cat => (
+                            <button 
+                                key={cat}
+                                className={`filter-pill ${selectedCategory === cat ? 'active' : ''}`}
+                                onClick={() => setSelectedCategory(cat)}
+                            >
+                                {cat}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 <div className="cards-grid">
@@ -113,6 +132,8 @@ const ExerciseGuide = ({ onBack }) => {
                 
                 .guide-container { display: flex; flex-direction: column; gap: 24px; }
 
+                .discovery-header { display: flex; flex-direction: column; gap: 16px; margin-bottom: 8px; }
+
                 .search-panel { 
                     display: flex; align-items: center; gap: 12px; padding: 12px 20px;
                     background: rgba(0, 240, 255, 0.05); border: 1px solid var(--glass-border);
@@ -122,13 +143,36 @@ const ExerciseGuide = ({ onBack }) => {
                     flex: 1; background: transparent; border: none; outline: none; 
                     color: #fff; font-family: 'Rajdhani', sans-serif; font-size: 16px;
                 }
+                
+                .filter-pills {
+                    display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px;
+                }
+                .filter-pills::-webkit-scrollbar { display: none; }
+                .filter-pill {
+                    padding: 6px 16px; background: rgba(0, 10, 20, 0.6);
+                    border: 1px solid var(--glass-border); border-radius: 20px;
+                    color: var(--text-secondary); font-size: 10px; font-weight: 800; letter-spacing: 1px;
+                    cursor: pointer; transition: all 0.3s; white-space: nowrap;
+                }
+                .filter-pill:hover { border-color: var(--color-primary); color: #fff; }
+                .filter-pill.active {
+                    background: var(--color-primary); color: #000;
+                    border-color: var(--color-primary); box-shadow: 0 0 15px rgba(0,240,255,0.3);
+                }
 
                 .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
                 
                 .guide-card {
                     padding: 24px; cursor: pointer; display: flex; flex-direction: column; gap: 12px;
-                    transition: all 0.3s;
+                    transition: all 0.3s ease-out;
+                    border: 1px solid var(--glass-border);
                 }
+                .guide-card:hover {
+                    transform: translateY(-6px);
+                    border-color: var(--color-primary);
+                    box-shadow: 0 10px 30px rgba(0, 240, 255, 0.15);
+                }
+                
                 .cat-tag { font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--color-primary); letter-spacing: 1px; }
                 .guide-card h3 { font-size: 20px; letter-spacing: 1px; color: #fff; }
                 .description-preview { font-size: 13px; color: var(--text-secondary); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
