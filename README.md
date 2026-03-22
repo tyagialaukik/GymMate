@@ -1,92 +1,114 @@
-# 🧬 GymMate: AI-Powered Tactical Fitness Companion
+# GymMate AI 🏋️‍♂️🤖
 
-GymMate is a premium, full-stack fitness application designed to provide a comprehensive and interactive workout experience. Featuring **JARVIS**, an AI-driven tactical assistant, and an **AI Food Scanner**, GymMate helps athletes track their progress, manage their diet, and follow expert-designed workout plans.
+![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
+![NodeJS](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white)
+![Vite](https://img.shields.io/badge/vite-%23646CFF.svg?style=for-the-badge&logo=vite&logoColor=white)
+![Gemini AI](https://img.shields.io/badge/Gemini_AI-8E75B2?style=for-the-badge&logo=google&logoColor=white)
+![Vercel](https://img.shields.io/badge/vercel-%23000000.svg?style=for-the-badge&logo=vercel&logoColor=white)
+![Render](https://img.shields.io/badge/Render-%46E3B7.svg?style=for-the-badge&logo=render&logoColor=white)
+
+AI-powered fitness platform with real-time coaching, macro scanning, and workout guidance. GymMate AI brings the future of tactical fitness directly to your browser, combining cutting-edge LLMs with a sleek, gamified UI.
+
+**🌐 Live Demo:** [https://gym-mate-eight.vercel.app](https://gym-mate-eight.vercel.app)
 
 ---
 
-## 🚀 Key Features
+## ✨ Features
 
-### 🛠️ Tactical Core (JARVIS AI)
-- **Interactive AI Coaching**: Real-time fitness guidance and query handling powered by OpenAI.
-- **Visual Intelligence**: AI-powered Food Scanner (OpenAI Vision) for instant nutritional analysis from images.
-
-### 🏋️ Fitness & Training
-- **Dynamic Workout Plans**: Specialized tracks for **Beginner**, **Intermediate**, and **Advanced** athletes.
-- **Goal-Oriented Pathways**: Choose between **Cutting** or **Bulking** goals.
-- **Dietary Flexibility**: Intelligent meal plans for both **Veg** and **Non-Veg** preferences.
-- **Exercise Guide**: Detailed instructions and visual cues for various exercises.
-
-### 📊 Performance Tracking
-- **BMI Calculator**: Integrated tool to monitor body mass index and health status.
-- **Daily Diet Tracker**: Log and monitor your nutritional intake effortlessly.
-- **User Dashboard**: Overview of current fitness goals and progress.
-
-### 🔐 Security & Persistence
-- **Secure Authentication**: JWT-based signup and login system with bcrypt password hashing.
-- **Data Persistence**: Local database (LowDB) for saving user profiles and workout history.
+- **JARVIS AI Chat (Streaming)**: Get real-time, token-by-token fitness and diet guidance styled as a tactical AI assistant.
+- **Macro Scanner (Gemini Vision)**: Analyze food images via AI to get instant calorie, protein, carb, fat, and fiber breakdowns visually.
+- **Workout Library**: Curated weekly routines with dynamic difficulty levels and visual completion tracking.
+- **Exercise Guide**: An interactive movement library filtered by muscle groups.
+- **Biometrics & BMI**: Dynamic BMI calculator with visual range indicators.
+- **JWT Authentication**: Secure user sessions spanning frontend and backend.
 
 ---
 
 ## 💻 Tech Stack
 
-- **Frontend**: React (Vite), Lucide-React (Icons), Axios, Custom CSS (Premium Dark Theme).
-- **Backend**: Node.js, Express, LowDB, JSON Web Tokens (JWT), Bcryptjs.
-- **AI Integration**: OpenAI Chat & Vision APIs.
+| Layer | Technologies |
+| --- | --- |
+| **Frontend** | React, Vite, React Router (Dynamic UI & Routing) |
+| **Backend** | Node.js, Express, JWT, bcryptjs (API & Secure Auth) |
+| **AI Integration** | Google Gemini 2.5 Flash (Text & Vision API with SSE streaming) |
 
 ---
 
-## 🛠️ Setup & Installation
+## 🚀 Getting Started
+
+Follow these instructions to run GymMate AI locally.
 
 ### Prerequisites
-- [Node.js](https://nodejs.org/) (v16.x or later)
-- [OpenAI API Key](https://platform.openai.com/api-keys)
+- Node.js installed (v18+)
+- A [Google Gemini API Key](https://aistudio.google.com/app/apikey)
 
-### 1. Clone the Repository
+### 1. Clone the repository
 ```bash
-git clone <repository-url>
+git clone https://github.com/tyagialaukik/GymMate.git
 cd GymMate
 ```
 
 ### 2. Install Dependencies
+Install modules for both the frontend and the backend.
 ```bash
+# Install frontend dependencies
+npm install
+
+# Install backend dependencies
+cd server
 npm install
 ```
 
-### 3. Configure Environment Variables
-Create a `.env` file in the `server/` directory and add the following:
-```env
-OPENAI_API_KEY=your_openai_api_key_here
-JWT_SECRET=your_jwt_secret_here
-PORT=5000
-```
-
-### 4. Start the Application
-
-**Run Frontend & Backend (Separate terminals required):**
-
-- **Frontend**:
-  ```bash
-  npm run dev
-  ```
-- **Backend**:
-  ```bash
-  node server/server.js
-  ```
-
-*Alternatively, run the provided batch script on Windows:*
+### 3. Setup Environment Variables
+Navigate into the `server` directory and rename or copy `.env.example` to `.env`.
 ```bash
-run_dev.bat
+cd server
+cp .env.example .env
+```
+Inside `.env`, verify your API key and ports:
+```env
+PORT=5000
+GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
+### 4. Run Locally
+You will need to run both the frontend and backend servers.
+
+**Start the Backend Server:**
+```bash
+cd server
+node server.js
+```
+
+**Start the Frontend App (in a new terminal):**
+```bash
+# From the root /GymMate directory
+npm run dev
+```
+Open [http://localhost:5174](http://localhost:5174) in your browser.
+
 ---
 
-## 📁 Project Structure
+## 📸 Screenshots
 
-- `src/components/`: Modular React components for various sections (AI Chat, Food Scanner, BMI, etc.).
-- `server/`: Express backend featuring auth routes and AI proxy services.
-- `src/assets/`: Static assets and style tokens.
+### Home Screen
+<!-- Add your home screen screenshot here. Example: ![Home Screen](./docs/screenshots/home.png) -->
+*(Screenshot placeholder)*
+
+### JARVIS Chat
+<!-- Add your chat screenshot here -->
+*(Screenshot placeholder)*
+
+### Macro Scanner
+<!-- Add your scanner screenshot here -->
+*(Screenshot placeholder)*
+
+### Workout Library
+<!-- Add your workout library screenshot here -->
+*(Screenshot placeholder)*
 
 ---
 
-## 🛡️ License
-This project is for educational/personal use. Please ensure you comply with OpenAI's usage policies when using the AI features.
+## 👨‍💻 Author
+**Alaukik Tyagi**  
+SRMIST Ghaziabad, B.Tech CS (2023-2027)
