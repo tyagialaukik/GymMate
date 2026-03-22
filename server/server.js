@@ -20,7 +20,7 @@ const PORT = process.env.PORT || 5000;
 const DB_PATH = path.join(__dirname, 'db.json');
 
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'],
+    origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000', 'https://gym-mate-eight.vercel.app'],
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type', 'Authorization'],
 }));
