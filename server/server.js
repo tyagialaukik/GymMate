@@ -7,10 +7,12 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 
 dotenv.config();
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -79,61 +81,38 @@ app.post('/api/chat', async (req, res) => {
     try {
         const { messages } = req.body;
         console.log("[GymMate AI] ✅ Route HIT — /api/chat");
-        console.log("[GymMate AI] API Key loaded:", !!process.env.GEMINI_API_KEY);
-        console.log("[GymMate AI] API Key value (first 8 chars):", process.env.GEMINI_API_KEY?.slice(0, 8));
+        console.log("[GymMate AI] Groq API Key loaded:", !!process.env.GROQ_API_KEY);
 
-        if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your_gemini_api_key_here') {
-            throw new Error("GEMINI_API_KEY is not configured.");
+        if (!process.env.GROQ_API_KEY || process.env.GROQ_API_KEY === 'your_groq_api_key_here') {
+            throw new Error("GROQ_API_KEY is not configured.");
         }
-
-        // Extract system prompt and history
-        const systemMessage = messages.find(m => m.role === 'system');
-        let history = messages
-            .filter(m => m.role !== 'system')
-            .map(m => ({
-                role: m.role === 'assistant' ? 'model' : 'user',
-                parts: [{ text: m.content }]
-            }));
-
-        // Pop the latest user message — that's what we send via sendMessageStream
-        const userMessage = history.pop().parts[0].text;
-
-        // Gemini requires history to start with 'user', never 'model'
-        // Drop any leading model messages (e.g. the initial bot greeting)
-        while (history.length > 0 && history[0].role === 'model') {
-            history.shift();
-        }
-
-        const model = genAI.getGenerativeModel({ 
-            model: "gemini-2.5-flash-lite", 
-            systemInstruction: systemMessage ? systemMessage.content : "You are GymMate AI — a personal fitness coach."
-        });
-
-        const chat = model.startChat({
-            history: history,
-        });
 
         // Set headers for SSE
         res.setHeader('Content-Type', 'text/event-stream');
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
 
-        const result = await chat.sendMessageStream(userMessage);
+        const stream = await groq.chat.completions.create({
+            messages: messages,
+            model: "llama-3.1-8b-instant",
+            stream: true,
+        });
 
-        for await (const chunk of result.stream) {
-            const chunkText = chunk.text();
-            res.write(`data: ${JSON.stringify({ text: chunkText })}\n\n`);
+        for await (const chunk of stream) {
+            const chunkText = chunk.choices[0]?.delta?.content || "";
+            if (chunkText) {
+                res.write(`data: ${JSON.stringify({ text: chunkText })}\n\n`);
+            }
         }
 
         res.write('data: [DONE]\n\n');
         res.end();
 
     } catch (error) {
-        console.error("[ERROR] Gemini Chat failure — message:", error.message);
+        console.error("[ERROR] Groq Chat failure — message:", error.message);
         console.error("[ERROR] Full error:", error);
-        // If headers are already sent, we can't send a normal JSON error
         if (!res.headersSent) {
-            res.status(500).json({ error: error.message || "Gemini Core Timeout" });
+            res.status(500).json({ error: error.message || "Groq Core Timeout" });
         } else {
             res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
             res.end();
