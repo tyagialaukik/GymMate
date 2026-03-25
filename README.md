@@ -15,8 +15,8 @@ AI-powered fitness platform with real-time coaching, macro scanning, and workout
 
 ## ✨ Features
 
-- **JARVIS AI Chat (Streaming)**: Get real-time, token-by-token fitness and diet guidance styled as a tactical AI assistant.
-- **Macro Scanner (Gemini Vision)**: Analyze food images via AI to get instant calorie, protein, carb, fat, and fiber breakdowns visually.
+- **JARVIS AI Chat (Groq API)**: Ultra-fast token-by-token fitness guidance powered by Llama 3.1 8B Instant (~560 tps).
+- **Macro Scanner (Gemini Vision)**: Analyze food images via Gemini 2.5 Flash Lite for instant nutritional breakdowns.
 - **Workout Library**: Curated weekly routines with dynamic difficulty levels and visual completion tracking.
 - **Exercise Guide**: An interactive movement library filtered by muscle groups.
 - **Biometrics & BMI**: Dynamic BMI calculator with visual range indicators.
@@ -30,7 +30,7 @@ AI-powered fitness platform with real-time coaching, macro scanning, and workout
 | --- | --- |
 | **Frontend** | React, Vite, React Router (Dynamic UI & Routing) |
 | **Backend** | Node.js, Express, JWT, bcryptjs (API & Secure Auth) |
-| **AI Integration** | Google Gemini 2.5 Flash (Text & Vision API with SSE streaming) |
+| **AI Integration** | JARVIS Chat: **Groq API** (Llama 3.1 8B Instant) — ultra-fast ~560 tps streaming<br>Macro Scanner: **Google Gemini 2.5 Flash Lite** (Vision) |
 
 ---
 
@@ -41,6 +41,7 @@ Follow these instructions to run GymMate AI locally.
 ### Prerequisites
 - Node.js installed (v18+)
 - A [Google Gemini API Key](https://aistudio.google.com/app/apikey)
+- A [Groq API Key](https://console.groq.com/keys)
 
 ### 1. Clone the repository
 ```bash
@@ -69,6 +70,7 @@ Inside `.env`, verify your API key and ports:
 ```env
 PORT=5000
 GEMINI_API_KEY=your_gemini_api_key_here
+GROQ_API_KEY=your_groq_api_key_here
 ```
 
 ### 4. Run Locally
