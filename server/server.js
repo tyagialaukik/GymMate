@@ -175,4 +175,12 @@ app.post('/api/vision', async (req, res) => {
     }
 });
 
+// --- Health Check & Self-Ping (Render Fix) ---
+app.get('/ping', (req, res) => res.send('pong'));
+
+setInterval(() => {
+    fetch('https://gymmate-backend-r8qy.onrender.com/ping')
+        .catch(err => console.log('Ping failed:', err));
+}, 14 * 60 * 1000);
+
 app.listen(PORT, () => console.log(`[JARVIS] Systems Online at http://localhost:${PORT}`));
